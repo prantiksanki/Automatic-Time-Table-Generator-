@@ -45,7 +45,7 @@ app.get('/modifyTimeTableAdmin' , (req,res) =>res.sendFile(path.join(__dirname, 
 app.get('/modifyTimeTableFaculty', (req, res) => res.sendFile(path.join(__dirname, 'view', 'modifyTTFaculty.html')));
 app.get('/facultyClassSchedule' , (req,res) =>{ res.sendFile(path.join(__dirname, 'view', 'facultyClassSchedule.html'))})
 app.get('/viewBatchTTs' , (req, res) => res.sendFile(path.join(__dirname, 'view', 'viewBAtchTimeTable.html')))
-
+app.get('/myTimeTable' , (req,res) => res.sendFile(path.join(__dirname, 'view', 'viewBAtchTimeTable.html')) )
 
 
 
@@ -207,87 +207,84 @@ app.post('/modifyTimeTableFaculty' , (req , res) =>
 
 
 
+  app.post('/createTimeTable', async (req, res) => {
+    const teachers = [
+        'Amar Jindal', 'Kamal Raj Singh', 'Varun Sapra', 'Anand Kumar',
+        'Divya Rose', 'Pankaj Rana', 'Pratibha Joshi', 'Mohammad Asif'
+    ];
 
-app.post('/createTimeTable', async (req, res) => {
-   const teachers = [
-    'Amar Jindal', 'Kamal Raj Singh', 'Varun Sapra', 'Anand Kumar',
-    'Divya Rose', 'Pankaj Rana', 'Pratibha Joshi', 'Mohammad Asif'
-  ];
-  
-  const classrooms = [
-    '1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008',
-    '1009', '1101', '1102', '1103', '1104'
-  ];
+    const classrooms = [
+        '1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008',
+        '1009', '1101', '1102', '1103', '1104'
+    ];
 
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const classDurations = [1, 2];
-  const batches = Array.from({ length: 5 }, (_, i) => `B${i + 1}`);
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const classDurations = [1, 2]; 
+    const batches = Array.from({ length: 5 }, (_, i) => `B${i + 1}`);
 
-   const timeSlots = {};
-  days.forEach(day => {
-    timeSlots[day] = Array.from({ length: 10 }, (_, hour) => [8 + hour, 9 + hour]);
-  });
-
-   function getRandomTimeSlot(day) {
-    const slots = timeSlots[day];
-    if (slots.length === 0) {
-      throw new Error(`No time slots available for ${day}`);
-    }
-    return slots[Math.floor(Math.random() * slots.length)];
-  }
-
-  const timetable = [];
-  const classesPerBatch = 25;
-  const numClassesPerDay = {};
-  days.forEach(day => {
-    numClassesPerDay[day] = Math.floor(Math.random() * 3) + 3;
-  });
-
-   batches.forEach(batch => {
-    let totalClassesScheduled = 0;
+     const timeSlots = {};
     days.forEach(day => {
-      let numClasses = numClassesPerDay[day];
-      if (totalClassesScheduled + numClasses > classesPerBatch) {
-        numClasses = classesPerBatch - totalClassesScheduled;
-      }
-
-      for (let i = 0; i < numClasses; i++) {
-        if (timeSlots[day].length === 0) {
-          timeSlots[day] = Array.from({ length: 10 }, (_, hour) => [8 + hour, 9 + hour]);
-        }
-
-        const [startTime, endTime] = getRandomTimeSlot(day);
-        const teacher = teachers[Math.floor(Math.random() * teachers.length)];
-        const classroom = classrooms[Math.floor(Math.random() * classrooms.length)];
-        const duration = classDurations[Math.floor(Math.random() * classDurations.length)];
-        const actualEndTime = Math.min(startTime + duration, 18);
-
-        timetable.push({ batch, teacher, classroom, day, startTime, endTime: actualEndTime });
-
-         timeSlots[day] = timeSlots[day].filter(slot => !(slot[0] >= startTime && slot[1] <= actualEndTime));
-
-        totalClassesScheduled++;
-      }
-
-      if (totalClassesScheduled >= classesPerBatch) {
-        return false;  
-      }
+        timeSlots[day] = Array.from({ length: 8 }, (_, hour) => [9 + hour, 10 + hour]);  
     });
-  });
 
-  try {
-     await Timetable.insertMany(timetable);
-    console.log("Timetable saved to database");
-    return res.status(200).json({ message: "Time Table Created" });
+     function getRandomTimeSlot(day) {
+        const slots = timeSlots[day];
+        if (slots.length === 0) {
+            throw new Error(`No time slots available for ${day}`);
+        }
+        return slots[Math.floor(Math.random() * slots.length)];
+    }
 
-  } 
-  catch (error) {
-    console.error("Error saving timetable:", error);
-    res.status(500).send('Error saving timetable');
-  }
+    const timetable = [];
+    const classesPerBatch = 25;
+    const numClassesPerDay = {};
+    
+     days.forEach(day => {
+        numClassesPerDay[day] = Math.floor(Math.random() * 3) + 3;  
+    });
+
+    batches.forEach(batch => {
+        let totalClassesScheduled = 0;
+
+        days.forEach(day => {
+            let numClasses = numClassesPerDay[day];
+            if (totalClassesScheduled + numClasses > classesPerBatch) {
+                numClasses = classesPerBatch - totalClassesScheduled;  
+            }
+
+            for (let i = 0; i < numClasses; i++) {
+                 if (timeSlots[day].length === 0) {
+                    break;  
+                }
+
+                const [startTime, endTime] = getRandomTimeSlot(day);
+                const teacher = teachers[Math.floor(Math.random() * teachers.length)];
+                const classroom = classrooms[Math.floor(Math.random() * classrooms.length)];
+                const duration = classDurations[Math.floor(Math.random() * classDurations.length)];
+                const actualEndTime = Math.min(startTime + duration, 17);  
+
+                timetable.push({ batch, teacher, classroom, day, startTime, endTime: actualEndTime });
+
+                 timeSlots[day] = timeSlots[day].filter(slot => !(slot[0] >= startTime && slot[0] < actualEndTime));
+
+                totalClassesScheduled++;
+            }
+
+            if (totalClassesScheduled >= classesPerBatch) {
+                return false;   
+            }
+        });
+    });
+
+    try {
+        await Timetable.insertMany(timetable);
+        console.log("Timetable saved to database");
+        return res.status(200).json({ message: "Time Table Created" });
+    } catch (error) {
+        console.error("Error saving timetable:", error);
+        res.status(500).send('Error saving timetable');
+    }
 });
-
-
 
 
 
